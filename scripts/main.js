@@ -5,19 +5,19 @@ let buffer = canvas.getContext("2d");
 //{   
 //}
 
-function getRand(min, max)
+function getRand(min = 0, max = 1)
 {
     return min + (Math.random() * max);
 }
 
-function MLP(nInputs, nHidden, nOutputs, genes = null)
+function MLP(nInputs, nHidden, nOutputs, chromosome = null)
 {
     this.nInputs = nInputs;
     this.nHidden = nHidden;
     this.nOutputs = nOutputs;
     this.hiddenL = [];
     this.outputL =[];
-    this.genes = [];
+    this.chromosome = [];
     this.outputResults = [];
 
     this.defaultConstructor = function()
@@ -29,7 +29,7 @@ function MLP(nInputs, nHidden, nOutputs, genes = null)
             {
                 let weight = Math.random();
                 this.hiddenL[i].push(weight);
-                this.genes.push(weight);
+                this.chromosome.push(weight);
             }
         }
         
@@ -40,12 +40,12 @@ function MLP(nInputs, nHidden, nOutputs, genes = null)
             {
                 let weight = Math.random();
                 this.outputL[i].push(weight);
-                this.genes.push(weight);
+                this.chromosome.push(weight);
             }
         }
     }
 
-    this.geneConstructor = function(genes)
+    this.geneConstructor = function(chromosome)
     {
         let arrayPos = 0;
         for(let i = 0; i < nHidden; ++i)
@@ -53,8 +53,8 @@ function MLP(nInputs, nHidden, nOutputs, genes = null)
             this.hiddenL.push([]);
             for(let j = 0; j <= nInputs; ++j)
             {
-                this.hiddenL[i].push(genes[arrayPos]);
-                this.genes.push(genes[arrayPos]);
+                this.hiddenL[i].push(chromosome[arrayPos]);
+                this.chromosome.push(chromosome[arrayPos]);
                 arrayPos++;
             }
         }
@@ -64,17 +64,17 @@ function MLP(nInputs, nHidden, nOutputs, genes = null)
             this.outputL.push([]);
             for(let j = 0; j <= nHidden; ++j)
             {
-                this.outputL[i].push(genes[arrayPos]);
-                this.genes.push(genes[arrayPos]);
+                this.outputL[i].push(chromosome[arrayPos]);
+                this.chromosome.push(chromosome[arrayPos]);
                 arrayPos++;
             }
         }
     }
 
-    if(genes === null)
+    if(chromosome === null)
         this.defaultConstructor();
     else
-        this.geneConstructor(genes);
+        this.geneConstructor(chromosome);
 
     this.HiddenActivationFunc = function(val)
     {
@@ -115,12 +115,12 @@ function MLP(nInputs, nHidden, nOutputs, genes = null)
         }
     }
 
-    this.geGenes = function()
+    this.getChromosome = function()
     {
         let copy = [];
-        for(let i = 0; i < this.genes.length; ++i)
+        for(let i = 0; i < this.chromosome.length; ++i)
         {
-            copy.push(this.genes[i]);
+            copy.push(this.chromosome[i]);
         }
 
         return copy;
@@ -137,5 +137,69 @@ function MLP(nInputs, nHidden, nOutputs, genes = null)
         return copy;
     }
 }
+
+function getNextGen(netList, successRate)
+{
+    let nInputs = netList[0].nInputs;
+    let nHidden = netList[0].nHidden;
+    let nOutputs = netList[0].nOutputs;
+    let newGen = [];
+
+    for(let i = 0; i < netList.length; ++i)
+    {
+        let parent1 = getRand();
+        let patent2 = getRand();
+
+        let index1 = 0;
+        for(let j = 0; j < successRate.length; ++j)
+        {
+            if(parent1 <= successRate[j])
+                break;
+            
+            index1++;
+        }
+
+        let index2 = 0;
+        for(let j = 0; j < successRate.length; ++j)
+        {
+            if(parent2 <= successRate[j])
+                break;
+            
+            index2++;
+        }
+        
+        let chromosome1 = netList[index1].getChromosome();
+        let chromosome2 = netList[index2].getChromosome();
+
+        let childChromosome = breed(chromosome1, chromosome2);
+        newGen.push(new MLP(nInputs, nHidden, nOutputs, childChromosome));
+    }
+
+    return newGen;
+}
+
+function getSuccessRate(fitnesses)
+{
+    let successRate = [];
+    prevRate = 0;
+    for(let i = 0; i < fitnesses.length; ++i)
+    {
+        successRate.push(prevRate + fitnesses[i]);
+    }
+}
+
+function compare(a, b)
+{
+    if(a < b)
+        return -1;
+    if(a > b)
+        return 1;
+    
+    return 0;
+}
+
+let populatin = 10;
+
+let neuralNets = [];
 
 //window.requestAnimationFrame(update);
