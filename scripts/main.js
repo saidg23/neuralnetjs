@@ -1,5 +1,17 @@
-let canvas = document.getElementById("canvas");
-let buffer = canvas.getContext("2d");
+let terminal = document.getElementById('terminal');
+function print(...buffer)
+{
+    for(let i = 0; i < buffer.length; ++i)
+    {
+        terminal.innerHTML += buffer[i];
+        window.scrollTo(0,document.body.scrollHeight);
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//let canvas = document.getElementById("canvas");
+//let buffer = canvas.getContext("2d");
 
 //function update()
 //{   
@@ -7,7 +19,7 @@ let buffer = canvas.getContext("2d");
 
 function getRand(min = 0, max = 1)
 {
-    return min + (Math.random() * max);
+    return min + (Math.random() * (max - min));
 }
 
 function MLP(nInputs, nHidden, nOutputs, chromosome = null)
@@ -172,6 +184,14 @@ function getNextGen(netList, successRate)
         let chromosome2 = netList[index2].getChromosome();
 
         let childChromosome = breed(chromosome1, chromosome2);
+        
+        let mutation = getRand(0, 100);
+        if(mutation > 99)
+        {
+            let mutationIndex = Math.floor(getRand(0, childChromosome.length));
+            childChromosome[mutationIndex] = getRand();
+        }
+
         newGen.push(new MLP(nInputs, nHidden, nOutputs, childChromosome));
     }
 
@@ -198,8 +218,44 @@ function compare(a, b)
     return 0;
 }
 
-let populatin = 10;
+function evaluateFitness(neuralNet)
+{
+    for(let i = 0; i < 20; ++i)
+    {
+        let input = [];
+        input.push(Math.floor(getRand(0.5, 1.5)));
+        input.push(Math.floor(getRand(0.5, 1.5)));
+        print(input[0], ", ", input[1], "<br>");
+    }
+    return 0;
+}
 
-let neuralNets = [];
+function main()
+{
+    let population = 10;
 
+    let neuralNets = [];
+    for(let i = 0; i < population; ++i)
+    {
+        neuralNets.push(new MLP(2, 3, 1));
+    }
+
+    for(let i = 0; i < 20; ++i)
+    {
+        let fitnesses = [];
+        for(let j = 0; j < population; ++j)
+        {
+            fitnesses.push(evaluateFitness(neuralNets[j]));
+        }
+    }
+}
+
+function test()
+{
+    for(let i = 0; i < 1000; ++i)
+    {
+        print("test #", i, "<br>");
+    }
+}
+window.onload = test;
 //window.requestAnimationFrame(update);
