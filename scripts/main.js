@@ -207,6 +207,7 @@ function getSuccessRate(fitnesses)
     for(let i = 0; i < fitnesses.length; ++i)
     {
         successRate.push(prevRate + fitnesses[i]);
+        prevRate =  successRate[i];
     }
 
     return successRate;
@@ -225,7 +226,7 @@ function compare(a, b)
 function evaluateFitness(neuralNet)
 {
     let correct = 0;
-    for(let i = 0; i < 20; ++i)
+    for(let i = 0; i < 200; ++i)
     {
         let input = [];
         input.push(Math.floor(getRand(0.5, 1.5)));
@@ -240,14 +241,26 @@ function evaluateFitness(neuralNet)
             correct++;
     }
 
-    return correct / 20 * 100;
+    return correct / 200 * 100;
 }
 
 function sortNeuralNets(neuralNets, fitnesses)
 {
-    for(let i = 0; i < fitnesses.length; ++i)
+    for(let i = 0; i < fitnesses.length - 1; ++i)
     {
-        if(fitnesses)
+        if(fitnesses[i+ 1] < fitnesses[i])
+        {
+            for(let j = i; j >= 0 && fitnesses[j + 1] < fitnesses[j]; --j)
+            {
+                let temp = fitnesses[j];
+                fitnesses[j] = fitnesses[j + 1];
+                fitnesses[j + 1] = temp;
+                
+                temp = neuralNets[j];
+                neuralNets[j] = neuralNets[j + 1];
+                neuralNets[j + 1] = temp;
+            }
+        }
     }
 }
 
@@ -255,6 +268,7 @@ let i = 0;
 let j = 0;
 let population = 10;
 let fitnesses = [];
+let successRate = [];
 
 let neuralNets = [];
 for(let i = 0; i < population; ++i)
@@ -264,15 +278,20 @@ for(let i = 0; i < population; ++i)
 
 function main()
 {
-    if(i >= 5)
-        clearInterval(iterate);
     if(j >= population)
     {
         i++;
         j = 0;
     }
-
-    fitnesses.push(evaluateFitness(neuralNets[j]));
+    
+    if(i >= 1)
+    {
+        clearInterval(iterate);
+        sortNeuralNets(neuralNets, fitnesses);
+        successRate = getSuccessRate(fitnesses);
+    }
+    else
+        fitnesses.push(evaluateFitness(neuralNets[j]));
     
     ++j;
 
