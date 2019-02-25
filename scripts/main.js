@@ -4,7 +4,6 @@ function print(...buffer)
     for(let i = 0; i < buffer.length; ++i)
     {
         terminal.innerHTML += buffer[i];
-        window.scrollTo(0,document.body.scrollHeight);
     }
 }
 
@@ -88,14 +87,17 @@ function MLP(nInputs, nHidden, nOutputs, chromosome = null)
     else
         this.geneConstructor(chromosome);
 
-    this.HiddenActivationFunc = function(val)
+    this.hiddenActivationFunc = function(val)
     {
         return Math.tanh(val);
     }
 
     this.outputActivationFunc = function(val)
     {
-        return val;
+        if(val >= 0)
+            return 1;
+
+        return 0;
     }
 
     this.input = function(input)
@@ -111,7 +113,7 @@ function MLP(nInputs, nHidden, nOutputs, chromosome = null)
             }
 
             netInput += this.hiddenL[i][this.nInputs];
-            hiddenLResults.push(HiddenActivationFunc(netInput));
+            hiddenLResults.push(this.hiddenActivationFunc(netInput));
         }
                
         for(let i = 0; i < this.nOutputs; ++i)
@@ -123,7 +125,7 @@ function MLP(nInputs, nHidden, nOutputs, chromosome = null)
             }
 
             netInput += this.outputL[i][this.nHidden];
-            this.outputResults.push(outputActivationFunc(netInput));
+            this.outputResults.push(this.outputActivationFunc(netInput));
         }
     }
 
@@ -206,6 +208,8 @@ function getSuccessRate(fitnesses)
     {
         successRate.push(prevRate + fitnesses[i]);
     }
+
+    return successRate;
 }
 
 function compare(a, b)
@@ -220,42 +224,59 @@ function compare(a, b)
 
 function evaluateFitness(neuralNet)
 {
+    let correct = 0;
     for(let i = 0; i < 20; ++i)
     {
         let input = [];
         input.push(Math.floor(getRand(0.5, 1.5)));
         input.push(Math.floor(getRand(0.5, 1.5)));
-        print(input[0], ", ", input[1], "<br>");
+
+        let expectedOutput = 0;
+        if((input[0] === 0 && input[1] === 1) || (input[0] === 1 && input[1] === 0))
+            expectedOutput = 1;
+
+        neuralNet.input(input);
+        if(neuralNet.outputResults[0] === expectedOutput)
+            correct++;
     }
-    return 0;
+
+    return correct / 20 * 100;
+}
+
+function sortNeuralNets(neuralNets, fitnesses)
+{
+    for(let i = 0; i < fitnesses.length; ++i)
+    {
+        if(fitnesses)
+    }
+}
+
+let i = 0;
+let j = 0;
+let population = 10;
+let fitnesses = [];
+
+let neuralNets = [];
+for(let i = 0; i < population; ++i)
+{
+    neuralNets.push(new MLP(2, 3, 1));
 }
 
 function main()
 {
-    let population = 10;
-
-    let neuralNets = [];
-    for(let i = 0; i < population; ++i)
+    if(i >= 5)
+        clearInterval(iterate);
+    if(j >= population)
     {
-        neuralNets.push(new MLP(2, 3, 1));
+        i++;
+        j = 0;
     }
 
-    for(let i = 0; i < 20; ++i)
-    {
-        let fitnesses = [];
-        for(let j = 0; j < population; ++j)
-        {
-            fitnesses.push(evaluateFitness(neuralNets[j]));
-        }
-    }
+    fitnesses.push(evaluateFitness(neuralNets[j]));
+    
+    ++j;
+
+    window.scrollTo(0,document.body.scrollHeight);
 }
 
-function test()
-{
-    for(let i = 0; i < 1000; ++i)
-    {
-        print("test #", i, "<br>");
-    }
-}
-window.onload = test;
-//window.requestAnimationFrame(update);
+let iterate = setInterval(main, 0);
