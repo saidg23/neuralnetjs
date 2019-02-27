@@ -38,7 +38,7 @@ function MLP(nInputs, nHidden, nOutputs, chromosome = null)
             this.hiddenL.push([]);
             for(let j = 0; j <= nInputs; ++j)
             {
-                let weight = getRand(-1, 1);
+                let weight = getRand(-4, 4);
                 this.hiddenL[i].push(weight);
                 this.chromosome.push(weight);
             }
@@ -49,7 +49,7 @@ function MLP(nInputs, nHidden, nOutputs, chromosome = null)
             this.outputL.push([]);
             for(let j = 0; j <= nHidden; ++j)
             {
-                let weight = getRand(-1, 1);
+                let weight = getRand(-4, 4);
                 this.outputL[i].push(weight);
                 this.chromosome.push(weight);
             }
@@ -177,7 +177,7 @@ function getNextGen(netList, successRate)
     let nOutputs = netList[0].nOutputs;
     let newGen = [];
 
-    for(let i = 0; i < netList.length; ++i)
+    for(let i = 0; i < netList.length / 2; ++i)
     {
         let parent1 = getRand();
         let parent2 = getRand();
@@ -203,23 +203,31 @@ function getNextGen(netList, successRate)
         let chromosome1 = netList[index1].getChromosome();
         let chromosome2 = netList[index2].getChromosome();
 
-        let childChromosome = breed(chromosome1, chromosome2);
+        let childChromosome1 = breed(chromosome1, chromosome2);
+        let childChromosome2 = breed(chromosome1, chromosome2);
         
         let mutation = getRand(0, 100);
         if(mutation > 95)
         {
             let mutationIndex = Math.floor(getRand(0, childChromosome.length));
-            childChromosome[mutationIndex] = getRand(-1, 1);
+            childChromosome1[mutationIndex] = getRand(-4, 4);
+            
+            mutationIndex = Math.floor(getRand(0, childChromosome.length));
+            childChromosome2[mutationIndex] = getRand(-4, 4);
         }
         
         mutation = getRand(0, 100);
         if(mutation > 98)
         {
             let mutationIndex = Math.floor(getRand(0, childChromosome.length));
-            childChromosome[mutationIndex] += getRand(-0.02, 0.02);
+            childChromosome1[mutationIndex] += getRand(-0.02, 0.02);
+            
+            mutationIndex = Math.floor(getRand(0, childChromosome.length));
+            childChromosome2[mutationIndex] = getRand(-0.02, 0.02);
         }
 
-        newGen.push(new MLP(nInputs, nHidden, nOutputs, childChromosome));
+        newGen.push(new MLP(nInputs, nHidden, nOutputs, childChromosome1));
+        newGen.push(new MLP(nInputs, nHidden, nOutputs, childChromosome2));
     }
 
     return newGen;
