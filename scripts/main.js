@@ -38,7 +38,7 @@ function MLP(nInputs, nHidden, nOutputs, chromosome = null)
             this.hiddenL.push([]);
             for(let j = 0; j <= nInputs; ++j)
             {
-                let weight = Math.random();
+                let weight = getRand(-1, 1);
                 this.hiddenL[i].push(weight);
                 this.chromosome.push(weight);
             }
@@ -49,7 +49,7 @@ function MLP(nInputs, nHidden, nOutputs, chromosome = null)
             this.outputL.push([]);
             for(let j = 0; j <= nHidden; ++j)
             {
-                let weight = Math.random();
+                let weight = getRand(-1, 1);
                 this.outputL[i].push(weight);
                 this.chromosome.push(weight);
             }
@@ -89,6 +89,7 @@ function MLP(nInputs, nHidden, nOutputs, chromosome = null)
 
     this.hiddenActivationFunc = function(val)
     {
+        //return Math.max(0, val);
         return Math.tanh(val);
     }
 
@@ -152,6 +153,23 @@ function MLP(nInputs, nHidden, nOutputs, chromosome = null)
     }
 }
 
+function breed(parent1, parent2)
+{
+    let splitIndex = Math.floor(getRand(0, parent1.length));
+    let childChromosome = [];
+    for(let i = 0; i < splitIndex; ++i)
+    {
+        childChromosome.push(parent1[i]);
+    }
+    
+    for(let i = splitIndex; i < parent2.length; ++i)
+    {
+        childChromosome.push(parent2[i]);
+    }
+    
+    return childChromosome;
+}
+
 function getNextGen(netList, successRate)
 {
     let nInputs = netList[0].nInputs;
@@ -162,7 +180,7 @@ function getNextGen(netList, successRate)
     for(let i = 0; i < netList.length; ++i)
     {
         let parent1 = getRand();
-        let patent2 = getRand();
+        let parent2 = getRand();
 
         let index1 = 0;
         for(let j = 0; j < successRate.length; ++j)
@@ -188,10 +206,17 @@ function getNextGen(netList, successRate)
         let childChromosome = breed(chromosome1, chromosome2);
         
         let mutation = getRand(0, 100);
-        if(mutation > 99)
+        if(mutation > 95)
         {
             let mutationIndex = Math.floor(getRand(0, childChromosome.length));
-            childChromosome[mutationIndex] = getRand();
+            childChromosome[mutationIndex] = getRand(-1, 1);
+        }
+        
+        mutation = getRand(0, 100);
+        if(mutation > 98)
+        {
+            let mutationIndex = Math.floor(getRand(0, childChromosome.length));
+            childChromosome[mutationIndex] += getRand(-0.02, 0.02);
         }
 
         newGen.push(new MLP(nInputs, nHidden, nOutputs, childChromosome));
@@ -202,14 +227,20 @@ function getNextGen(netList, successRate)
 
 function getSuccessRate(fitnesses)
 {
-    let successRate = [];
-    prevRate = 0;
+    let sum = 0
     for(let i = 0; i < fitnesses.length; ++i)
     {
-        successRate.push(prevRate + fitnesses[i]);
-        prevRate =  successRate[i];
+        sum += fitnesses[i];
     }
-
+    
+    let successRate = [];
+    let prev = 0;
+    for(let i = 0; i < fitnesses.length; ++i)
+    {
+        successRate.push(prev + fitnesses[i] / sum);
+        prev = successRate[i];
+    }
+    
     return successRate;
 }
 
@@ -226,7 +257,8 @@ function compare(a, b)
 function evaluateFitness(neuralNet)
 {
     let correct = 0;
-    for(let i = 0; i < 200; ++i)
+    /*
+    for(let i = 0; i < 100; ++i)
     {
         let input = [];
         input.push(Math.floor(getRand(0.5, 1.5)));
@@ -240,8 +272,26 @@ function evaluateFitness(neuralNet)
         if(neuralNet.outputResults[0] === expectedOutput)
             correct++;
     }
+    */
 
-    return correct / 200 * 100;
+    neuralNet.input([0, 0])
+    if(neuralNet.outputResults[0] === 0)
+        correct++;
+    
+    neuralNet.input([1, 0])
+    if(neuralNet.outputResults[0] === 1)
+        correct++;
+    
+    neuralNet.input([0, 1])
+    if(neuralNet.outputResults[0] === 1)
+        correct++;
+    
+    neuralNet.input([1, 1])
+    if(neuralNet.outputResults[0] === 0)
+        correct++;
+    
+    
+    return correct / 4 * 100;
 }
 
 function sortNeuralNets(neuralNets, fitnesses)
@@ -264,9 +314,17 @@ function sortNeuralNets(neuralNets, fitnesses)
     }
 }
 
-let i = 0;
+function displayResults(fitnesses)
+{
+    for(let i = 0; i < fitnesses.length; ++i)
+    {
+        print("MLP ", i, " was ", fitnesses[i], "% accurate<br>");
+    }
+}
+
+let it = 0;
 let j = 0;
-let population = 10;
+let population = 50;
 let fitnesses = [];
 let successRate = [];
 
@@ -276,26 +334,38 @@ for(let i = 0; i < population; ++i)
     neuralNets.push(new MLP(2, 3, 1));
 }
 
-function main()
+let testGen = null;
+
+function evaluate()
 {
     if(j >= population)
     {
-        i++;
-        j = 0;
-    }
-    
-    if(i >= 1)
-    {
         clearInterval(iterate);
+        iterate = setInterval(main, 0);
         sortNeuralNets(neuralNets, fitnesses);
+        displayResults(fitnesses);
         successRate = getSuccessRate(fitnesses);
+        print("<br>");
+        neuralNets = getNextGen(neuralNets, successRate);
+        fitnesses = [];
+        j = 0;
+        it++;
     }
     else
         fitnesses.push(evaluateFitness(neuralNets[j]));
     
     ++j;
+}
 
-    window.scrollTo(0,document.body.scrollHeight);
+function main()
+{
+    if(it > 50)
+        clearInterval(iterate);
+    else
+    {
+        clearInterval(iterate);
+        iterate = setInterval(evaluate, 0);
+    }
 }
 
 let iterate = setInterval(main, 0);
