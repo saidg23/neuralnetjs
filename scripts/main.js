@@ -363,7 +363,7 @@ function evaluate()
         
         if(fitnesses[population - 1] >= 100)
         {
-            it = 10000000;
+            it = Infinity;
             return;
         }
         
