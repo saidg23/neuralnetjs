@@ -1,6 +1,11 @@
 let terminal = document.getElementById('terminal');
 function print(...buffer)
 {
+    if(buffer[0] == "%CLEAR")
+    {
+        terminal.innerHTML = "";
+        return;
+    }
     for(let i = 0; i < buffer.length; ++i)
     {
         terminal.innerHTML += buffer[i];
@@ -209,20 +214,20 @@ function getNextGen(netList, successRate)
         let mutation = getRand(0, 100);
         if(mutation > 95)
         {
-            let mutationIndex = Math.floor(getRand(0, childChromosome.length));
+            let mutationIndex = Math.floor(getRand(0, childChromosome1.length));
             childChromosome1[mutationIndex] = getRand(-4, 4);
             
-            mutationIndex = Math.floor(getRand(0, childChromosome.length));
+            mutationIndex = Math.floor(getRand(0, childChromosome2.length));
             childChromosome2[mutationIndex] = getRand(-4, 4);
         }
         
         mutation = getRand(0, 100);
         if(mutation > 98)
         {
-            let mutationIndex = Math.floor(getRand(0, childChromosome.length));
+            let mutationIndex = Math.floor(getRand(0, childChromosome1.length));
             childChromosome1[mutationIndex] += getRand(-0.02, 0.02);
             
-            mutationIndex = Math.floor(getRand(0, childChromosome.length));
+            mutationIndex = Math.floor(getRand(0, childChromosome2.length));
             childChromosome2[mutationIndex] = getRand(-0.02, 0.02);
         }
 
@@ -333,6 +338,7 @@ function displayResults(fitnesses)
 let it = 0;
 let j = 0;
 let population = 50;
+let maxGenerations = 5000;
 let fitnesses = [];
 let successRate = [];
 
@@ -342,8 +348,6 @@ for(let i = 0; i < population; ++i)
     neuralNets.push(new MLP(2, 3, 1));
 }
 
-let testGen = null;
-
 function evaluate()
 {
     if(j >= population)
@@ -351,13 +355,24 @@ function evaluate()
         clearInterval(iterate);
         iterate = setInterval(main, 0);
         sortNeuralNets(neuralNets, fitnesses);
+        
+        print("%CLEAR");
+        print("generation: ", it, "<br>");
         displayResults(fitnesses);
-        successRate = getSuccessRate(fitnesses);
         print("<br>");
+        
+        if(fitnesses[population - 1] >= 100)
+        {
+            it = 10000000;
+            return;
+        }
+        
+        successRate = getSuccessRate(fitnesses);
         neuralNets = getNextGen(neuralNets, successRate);
         fitnesses = [];
         j = 0;
         it++;
+        return;
     }
     else
         fitnesses.push(evaluateFitness(neuralNets[j]));
@@ -367,8 +382,10 @@ function evaluate()
 
 function main()
 {
-    if(it > 50)
+    if(it > maxGenerations)
+    {
         clearInterval(iterate);
+    }
     else
     {
         clearInterval(iterate);
